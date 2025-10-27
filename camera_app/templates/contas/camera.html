@@ -5,23 +5,36 @@
   <title>Câmera</title>
   <style>
     body {
-      background: #111;
-      color: #fff;
-      text-align: center;
+      background-color: #e5e5e5; /* fundo cinza suave */
       font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 30px;
+      position: relative; /* necessário para posicionar as logos */
     }
+
+    h2 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+
     .video-container {
       position: relative;
       display: inline-block;
-      margin-top: 20px;
+      margin-top: 15px;
     }
+
     #video {
       width: 640px;
+      max-width: 100%;
       height: auto;
-      border: 2px solid #444;
+      border: 2px solid #aaa;
       border-radius: 8px;
       display: block;
+      background-color: #000;
+      margin: 0 auto;
     }
+
     #overlay {
       position: absolute;
       top: 10px;
@@ -35,26 +48,77 @@
       display: none;
       pointer-events: none;
     }
+
     #status {
-      margin-top: 15px;
-      font-size: 18px;
+      margin-top: 12px;
+      font-size: 16px;
       font-weight: bold;
       color: #0f0;
     }
 
-    /* controles opcionais */
     #controls {
-      margin-top: 12px;
-      color: #ddd;
+      margin-top: 20px;
+      color: #333;
     }
-    #controls input { width: 80px; padding: 4px; margin-right: 8px; }
-    #controls button { padding: 6px 10px; }
+
+    #controls input {
+      width: 80px;
+      padding: 5px;
+      margin-right: 8px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
+
+    #controls button {
+      padding: 8px 14px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #controls button:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      margin-top: 30px;
+      background-color: #dc3545;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    .btn-voltar:hover {
+      background-color: #b02a37;
+    }
+
+    /* Logos no canto inferior esquerdo */
+    .logos {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .logos img {
+      height: 45px;
+      width: auto;
+      opacity: 0.9;
+    }
   </style>
 </head>
 <body>
-  <h2>Detecção em tempo real</h2>
 
-  <!-- Colocamos o intervalo no data-attribute do container para evitar injetar variável no JS -->
+  
+
   <div class="video-container" id="video-container" data-intervalo="{{ intervalo|default_if_none:30000 }}">
     <video id="video" autoplay playsinline></video>
     <div id="overlay">Aguardando detecção...</div>
@@ -62,13 +126,18 @@
 
   <p id="status">Iniciando câmera...</p>
 
-  <!-- controles opcionais: usuário muda intervalo localmente (em segundos) -->
   <div id="controls">
     Intervalo (s):
     <input id="intervalo-input" type="number" min="5" step="1" value="">
     <button id="btn-set-intervalo">Aplicar</button>
-    <small style="display:block;margin-top:6px;color:#999">
-    </small>
+  </div>
+
+  <a href="{% url 'home' %}" class="btn-voltar">Voltar</a>
+
+  <!-- Logos das universidades -->
+  <div class="logos">
+    <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png" alt="Universidade 1">
+    <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png" alt="Universidade 2">
   </div>
 
   <script>
@@ -78,77 +147,65 @@
       const statusEl = document.getElementById("status");
       const container = document.getElementById("video-container");
 
-      // lê o valor do atributo data-intervalo (em ms) com fallback
       let intervaloMs = 30000;
       try {
         const raw = container.dataset.intervalo;
         const parsed = Number(raw);
         if (!Number.isFinite(parsed) || parsed <= 0) {
-          console.warn("Intervalo do Django inválido, usando 30000 ms");
+          console.warn("Intervalo inválido, usando 30000 ms");
         } else {
           intervaloMs = parsed;
         }
       } catch (e) {
-        console.warn("Erro ao ler intervalo do DOM, usando 30000 ms", e);
+        console.warn("Erro ao ler intervalo", e);
       }
-      console.log("⏱ Intervalo inicial (ms):", intervaloMs);
 
-      // preenche input opcional (em segundos)
       const inputEl = document.getElementById("intervalo-input");
       inputEl.value = Math.round(intervaloMs / 1000);
 
       document.getElementById("btn-set-intervalo").addEventListener("click", async () => {
-  const s = Number(inputEl.value);
-  if (!Number.isFinite(s) || s < 1) {
-    alert("Insira um número válido (segundos).");
-    return;
-  }
+        const s = Number(inputEl.value);
+        if (!Number.isFinite(s) || s < 1) {
+          alert("Insira um número válido (segundos).");
+          return;
+        }
+        intervaloMs = Math.round(s * 1000);
 
-  intervaloMs = Math.round(s * 1000);
-  console.log("⏱ Intervalo atualizado localmente para (ms):", intervaloMs);
+        try {
+          const resp = await fetch("/salvar_intervalo/", {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ segundos: s }),
+          });
 
-  // --- Envia para o Django ---
-  try {
-    const resp = await fetch("/salvar_intervalo/", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ segundos: s }),
-    });
+          const data = await resp.json();
+          if (resp.ok) {
+            alert("✅ Intervalo salvo com sucesso!");
+          } else {
+            alert("❌ Erro ao salvar: " + (data.erro || "erro desconhecido"));
+          }
+        } catch (e) {
+          console.error("Erro ao enviar intervalo:", e);
+          alert("Erro ao conectar com o servidor.");
+        }
+      });
 
-    const data = await resp.json();
-    if (resp.ok) {
-      alert("✅ Intervalo salvo com sucesso!");
-    } else {
-      alert("❌ Erro ao salvar: " + (data.erro || "erro desconhecido"));
-    }
-  } catch (e) {
-    console.error("Erro ao enviar intervalo:", e);
-    alert("Erro ao conectar com o servidor.");
-  }
-});
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
 
-    // função auxiliar para pegar o CSRF token do cookie
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-
-      // inicializa câmera
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
           video.srcObject = stream;
           statusEl.innerText = "Câmera ativada com sucesso!";
-          statusEl.style.color = "#0f0";
+          statusEl.style.color = "#28a745";
 
-          // start quando metadados prontos
-          video.addEventListener("loadedmetadata", () => {
-            console.log("🎥 Vídeo pronto, iniciando loop de captura...");
-            startLoop(); // start separado para poder reiniciar depois
-          });
+          video.addEventListener("loadedmetadata", () => startLoop());
         })
         .catch(err => {
           console.error("Erro ao acessar a câmera:", err);
@@ -167,41 +224,27 @@
         canvas.height = video.videoHeight || 480;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         return new Promise(resolve => canvas.toBlob(blob => resolve(blob), "image/jpeg"));
       }
 
       async function enviarFrame() {
         try {
-          console.log("📸 Capturando frame...");
           const frameBlob = await capturarFrame();
           const formData = new FormData();
           formData.append("frame", frameBlob, "frame.jpg");
 
-          console.log("📤 Enviando frame para o backend...");
           const resp = await fetch("/process_frame/", { method: "POST", body: formData });
-          if (!resp.ok) {
-            console.warn("Resposta não OK do backend:", resp.status);
-            // tenta ler JSON para ver erro
-            try { const j = await resp.json(); console.warn(j); } catch(_) {}
-            return null;
-          }
-          const data = await resp.json();
-          console.log("✅ Resposta recebida do backend:", data);
-          return data;
+          if (!resp.ok) return null;
+          return await resp.json();
         } catch (err) {
-          console.error("❌ Erro ao enviar frame:", err);
+          console.error("Erro ao enviar frame:", err);
           return null;
         }
       }
 
-      // Controle para evitar múltiplos loops simultâneos
       let loopRunning = false;
       function startLoop() {
-        if (loopRunning) {
-          console.log("Loop já está rodando — não inicia outro.");
-          return;
-        }
+        if (loopRunning) return;
         loopRunning = true;
         (async function loop() {
           while (loopRunning) {
@@ -212,13 +255,11 @@
               overlay.style.display = "block";
               overlay.innerText = "Nenhuma pessoa detectada";
             }
-            console.log(`⏳ Aguardando ${intervaloMs/1000} s até próxima captura...`);
             await new Promise(r => setTimeout(r, intervaloMs));
           }
         })();
       }
 
-      // Botão opcional para parar/reiniciar (útil para debug)
       const btnStop = document.createElement("button");
       btnStop.textContent = "Parar captura";
       btnStop.style.marginLeft = "12px";
@@ -232,11 +273,8 @@
         }
       };
       document.getElementById("controls").appendChild(btnStop);
-
-      // expõe função para debug no console se quiser
-      window.__camera_debug = { getInterval: () => intervaloMs, setIntervalMs: v => { intervaloMs=v; } };
-
     })();
   </script>
+  
 </body>
 </html>

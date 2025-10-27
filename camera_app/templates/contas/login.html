@@ -1,26 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
+    <meta charset="UTF-8">
     <title>Login</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 4px rgba(0,123,255,0.2);
+        }
+
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .messages {
+            margin-bottom: 15px;
+            color: red;
+            font-weight: 500;
+        }
+
+        /* Área dos logotipos */
+        .logos-container {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .logos-container img {
+            width: 60px; /* tamanho ajustável */
+            height: auto;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .logos-container img:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-    <h2>Login</h2>
+    <div class="login-container">
+        <h2>Login</h2>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color:red;">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        <label>Usuário:</label>
-        <input type="text" name="username" required><br><br>
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" name="username" required>
 
-        <label>Senha:</label>
-        <input type="password" name="password" required><br><br>
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required>
 
-        <button type="submit">Entrar</button>
-    </form>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <!-- Espaços para os logotipos -->
+    <div class="logos-container">
+        <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png" alt="Universidade 1">
+        <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png" alt="Universidade 2">
+    </div>
 </body>
 </html>
