@@ -1,33 +1,132 @@
 {% load static %}
-<div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #e5e5e5; font-family: Arial, sans-serif; position: relative;">
-    <div style="background-color: #f2f2f2; padding: 40px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;">
-        <h1 style="color: #333;">Bem-vindo, <span style="color: #007bff;">{{ user.username }}</span>!</h1>
-        <p style="color: #555;">Você está logado no sistema.</p>
 
-        <!-- Botão para abrir a câmera -->
-        <a href="{% url 'camera' %}" 
-           style="display: inline-block; margin-top: 20px; padding: 10px 25px; 
-                  background-color: #007bff; color: white; text-decoration: none; 
-                  border-radius: 6px; transition: 0.3s; margin-right: 10px;">
-            Abrir Câmera
-        </a>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
 
-        <!-- Botão de logout -->
-        <a href="{% url 'logout' %}" 
-           style="display: inline-block; margin-top: 20px; padding: 10px 25px; 
-                  background-color: #dc3545; color: white; text-decoration: none; 
-                  border-radius: 6px; transition: 0.3s;">
-            Sair
-        </a>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .home-container {
+            background-color: #fff;
+            padding: 35px 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        h1 span {
+            color: #007bff;
+        }
+
+        p {
+            font-size: 17px;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: 0.3s;
+            margin-bottom: 14px;
+        }
+
+        .btn-camera {
+            background-color: #007bff;
+        }
+        .btn-camera:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-logout {
+            background-color: #dc3545;
+        }
+        .btn-logout:hover {
+            background-color: #b32433;
+        }
+
+        .logos-container {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+
+        .logos-container img {
+            width: 48px;
+            height: auto;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 400px) {
+            .home-container {
+                padding: 28px 22px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+
+            .btn {
+                font-size: 17px;
+                padding: 14px;
+            }
+
+            .logos-container img {
+                width: 42px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="home-container">
+        <h1>Bem-vindo, <span>{{ user.username }}</span>!</h1>
+        <p>Você está logado no sistema.</p>
+
+        <a href="{% url 'camera' %}" class="btn btn-camera">Abrir Câmera</a>
+        <a href="{% url 'logout' %}" class="btn btn-logout">Sair</a>
     </div>
 
-    <!-- Logos no canto inferior esquerdo -->
-    <div style="position: absolute; bottom: 20px; left: 20px; display: flex; gap: 12px; align-items: center;">
-        <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png"
-             alt="Universidade 1"
-             style="height: 45px; width: auto; opacity: 0.9;">
-        <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png"
-             alt="Universidade 2"
-             style="height: 45px; width: auto; opacity: 0.9;">
+    <div class="logos-container">
+        <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png" alt="Universidade 1">
+        <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png" alt="Universidade 2">
     </div>
-</div>
+
+</body>
+</html>

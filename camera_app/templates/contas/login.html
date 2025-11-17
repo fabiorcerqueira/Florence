@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- IMPORTANTE PARA MOBILE -->
     <title>Login</title>
     <style>
         body {
@@ -13,80 +14,95 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            padding: 20px;
         }
 
         .login-container {
             background-color: #fff;
-            padding: 40px 50px;
-            border-radius: 12px;
+            padding: 35px 30px;
+            border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
-            width: 320px;
+            width: 100%;
+            max-width: 380px; /* Mais largo para celular */
         }
 
         h2 {
             margin-bottom: 25px;
+            font-size: 26px;
             color: #333;
         }
 
         label {
             display: block;
             text-align: left;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             color: #555;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 16px;
         }
 
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 18px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
             border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 17px;
         }
 
         input[type="text"]:focus,
         input[type="password"]:focus {
             border-color: #007bff;
             outline: none;
-            box-shadow: 0 0 4px rgba(0,123,255,0.2);
+            box-shadow: 0 0 6px rgba(0,123,255,0.25);
         }
 
-        button {
+        button,
+        .btn-link {
+            display: block;
             width: 100%;
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
+            text-decoration: none;
             transition: background 0.3s ease;
+            box-sizing: border-box;
+            font-weight: 600;
         }
 
-        button:hover {
+        button:hover,
+        .btn-link:hover {
             background-color: #0056b3;
+        }
+
+        .btn-link {
+            margin-top: 14px;
         }
 
         .messages {
             margin-bottom: 15px;
-            color: red;
-            font-weight: 500;
+            color: #d9534f;
+            font-weight: 600;
+            font-size: 16px;
         }
 
-        /* Área dos logotipos */
         .logos-container {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
         .logos-container img {
-            width: 60px; /* tamanho ajustável */
+            width: 48px;
             height: auto;
             opacity: 0.9;
             transition: opacity 0.3s;
@@ -94,6 +110,22 @@
 
         .logos-container img:hover {
             opacity: 1;
+        }
+
+        /* Ajustes extras para telas MUITO pequenas */
+        @media (max-width: 380px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            button, .btn-link {
+                font-size: 17px;
+                padding: 14px;
+            }
+
+            input {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -119,9 +151,10 @@
 
             <button type="submit">Entrar</button>
         </form>
+
+        <a href="{% url 'alterar_senha' %}" class="btn-link">Alterar senha</a>
     </div>
 
-    <!-- Espaços para os logotipos -->
     <div class="logos-container">
         <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png" alt="Universidade 1">
         <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png" alt="Universidade 2">

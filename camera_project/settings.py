@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-*o#!$uca!lx=fo0dc6a6=3cke-29=60!0%@)j4%1aw366rq@f_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -125,3 +125,5 @@ EMAIL_HOST_PASSWORD = 'aenn lwki vpbh thnd'  # Senha do e-mail ou senha de app
 
 # Opcional: quem aparece como remetente
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+LOGIN_REDIRECT_URL = '/home/'

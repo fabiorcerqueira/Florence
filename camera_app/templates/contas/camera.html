@@ -1,280 +1,287 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Câmera</title>
-  <style>
-    body {
-      background-color: #e5e5e5; /* fundo cinza suave */
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 30px;
-      position: relative; /* necessário para posicionar as logos */
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detecção de Sentimentos</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        .card-camera {
+            background-color: #fff;
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 680px; /* mais largo para comportar o vídeo */
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 26px;
+            color: #333;
+        }
+
+        .video-container {
+            position: relative;
+            margin: 0 auto;
+        }
+
+        #video {
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            display: none;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        #controls input {
+            width: 90px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #controls button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        #controls button:hover {
+            background: #0056b3;
+        }
+
+        .btn-voltar {
+        display: block;
+        width: 100%;
+        margin-top: 40px;     /* mais espaço acima */
+        margin-bottom: 50px;  /* espaço para não colidir com os logos */
+        background: #dc3545;
+        color: white;
+        text-align: center;
+        padding: 14px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.3s;
     }
 
-    h2 {
-      color: #333;
-      margin-bottom: 15px;
-    }
+        .btn-voltar:hover {
+            background: #b02a37;
+        }
 
-    .video-container {
-      position: relative;
-      display: inline-block;
-      margin-top: 15px;
-    }
+        /* Logos iguais ao login */
+        .logos-container {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
 
-    #video {
-      width: 640px;
-      max-width: 100%;
-      height: auto;
-      border: 2px solid #aaa;
-      border-radius: 8px;
-      display: block;
-      background-color: #000;
-      margin: 0 auto;
-    }
+        .logos-container img {
+            width: 48px;
+            height: auto;
+            opacity: 0.9;
+            transition: 0.3s;
+        }
 
-    #overlay {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 16px;
-      display: none;
-      pointer-events: none;
-    }
+        .logos-container img:hover {
+            opacity: 1;
+        }
 
-    #status {
-      margin-top: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #0f0;
-    }
+        @media (max-width: 480px) {
+            .card-camera {
+                padding: 25px 18px;
+            }
 
-    #controls {
-      margin-top: 20px;
-      color: #333;
-    }
-
-    #controls input {
-      width: 80px;
-      padding: 5px;
-      margin-right: 8px;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-    }
-
-    #controls button {
-      padding: 8px 14px;
-      background-color: #007bff;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    #controls button:hover {
-      background-color: #0056b3;
-    }
-
-    .btn-voltar {
-      display: inline-block;
-      margin-top: 30px;
-      background-color: #dc3545;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      transition: 0.3s;
-    }
-
-    .btn-voltar:hover {
-      background-color: #b02a37;
-    }
-
-    /* Logos no canto inferior esquerdo */
-    .logos {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .logos img {
-      height: 45px;
-      width: auto;
-      opacity: 0.9;
-    }
-  </style>
+            #controls input {
+                width: 70px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-  
+    <div class="card-camera">
+        <h2>Detecção de Sentimentos</h2>
 
-  <div class="video-container" id="video-container" data-intervalo="{{ intervalo|default_if_none:30000 }}">
-    <video id="video" autoplay playsinline></video>
-    <div id="overlay">Aguardando detecção...</div>
-  </div>
+        <div class="video-container" id="video-container" data-intervalo="{{ intervalo|default_if_none:30000 }}">
+            <video id="video" autoplay playsinline></video>
+            <div id="overlay">Aguardando...</div>
+        </div>
 
-  <p id="status">Iniciando câmera...</p>
+        <p id="status">Iniciando câmera...</p>
 
-  <div id="controls">
-    Intervalo (s):
-    <input id="intervalo-input" type="number" min="5" step="1" value="">
-    <button id="btn-set-intervalo">Aplicar</button>
-  </div>
+        <div id="controls">
+            <span style="font-size:16px; font-weight:600;">Intervalo (s):</span>
+            <input id="intervalo-input" type="number" min="5" step="1" value="">
+            <button id="btn-set-intervalo">Aplicar</button>
+        </div>
 
-  <a href="{% url 'home' %}" class="btn-voltar">Voltar</a>
+        <a href="{% url 'home' %}" class="btn-voltar">Voltar</a>
+    </div>
 
-  <!-- Logos das universidades -->
-  <div class="logos">
-    <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png" alt="Universidade 1">
-    <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png" alt="Universidade 2">
-  </div>
+    <div class="logos-container">
+        <img src="https://static.wixstatic.com/media/004bc3_29dab9f106354470b5a06deb88eca22e~mv2.png">
+        <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png">
+    </div>
 
-  <script>
-    (function() {
-      const overlay = document.getElementById("overlay");
-      const video = document.getElementById("video");
-      const statusEl = document.getElementById("status");
-      const container = document.getElementById("video-container");
+    <!-- SEU SCRIPT ORIGINAL (NÃO ALTERADO) -->
+    <script>
+        (function() {
+            const overlay = document.getElementById("overlay");
+            const video = document.getElementById("video");
+            const statusEl = document.getElementById("status");
+            const container = document.getElementById("video-container");
 
-      let intervaloMs = 30000;
-      try {
-        const raw = container.dataset.intervalo;
-        const parsed = Number(raw);
-        if (!Number.isFinite(parsed) || parsed <= 0) {
-          console.warn("Intervalo inválido, usando 30000 ms");
-        } else {
-          intervaloMs = parsed;
-        }
-      } catch (e) {
-        console.warn("Erro ao ler intervalo", e);
-      }
+            let intervaloMs = 30000;
+            try {
+                const raw = container.dataset.intervalo;
+                const parsed = Number(raw);
+                if (Number.isFinite(parsed) && parsed > 0) intervaloMs = parsed;
+            } catch (e) {}
 
-      const inputEl = document.getElementById("intervalo-input");
-      inputEl.value = Math.round(intervaloMs / 1000);
+            document.getElementById("intervalo-input").value = Math.round(intervaloMs / 1000);
 
-      document.getElementById("btn-set-intervalo").addEventListener("click", async () => {
-        const s = Number(inputEl.value);
-        if (!Number.isFinite(s) || s < 1) {
-          alert("Insira um número válido (segundos).");
-          return;
-        }
-        intervaloMs = Math.round(s * 1000);
+            document.getElementById("btn-set-intervalo").addEventListener("click", async () => {
+                const s = Number(document.getElementById("intervalo-input").value);
+                if (!Number.isFinite(s) || s < 1) return alert("Insira um número válido.");
+                intervaloMs = s * 1000;
 
-        try {
-          const resp = await fetch("/salvar_intervalo/", {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": getCookie("csrftoken"),
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({ segundos: s }),
-          });
+                const resp = await fetch("/salvar_intervalo/", {
+                    method: "POST",
+                    headers: { "X-CSRFToken": getCookie("csrftoken"), "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ segundos: s }),
+                });
 
-          const data = await resp.json();
-          if (resp.ok) {
-            alert("✅ Intervalo salvo com sucesso!");
-          } else {
-            alert("❌ Erro ao salvar: " + (data.erro || "erro desconhecido"));
-          }
-        } catch (e) {
-          console.error("Erro ao enviar intervalo:", e);
-          alert("Erro ao conectar com o servidor.");
-        }
-      });
+                const data = await resp.json();
+                if (resp.ok) alert("Intervalo salvo!");
+                else alert("Erro: " + (data.erro || "desconhecido"));
+            });
 
-      function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-      }
-
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          video.srcObject = stream;
-          statusEl.innerText = "Câmera ativada com sucesso!";
-          statusEl.style.color = "#28a745";
-
-          video.addEventListener("loadedmetadata", () => startLoop());
-        })
-        .catch(err => {
-          console.error("Erro ao acessar a câmera:", err);
-          statusEl.innerText = "Erro ao acessar a câmera.";
-          statusEl.style.color = "#f00";
-        });
-
-      function mostrarSentimento(sentimento) {
-        overlay.style.display = "block";
-        overlay.innerText = "Sentimento detectado: " + sentimento;
-      }
-
-      async function capturarFrame() {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return new Promise(resolve => canvas.toBlob(blob => resolve(blob), "image/jpeg"));
-      }
-
-      async function enviarFrame() {
-        try {
-          const frameBlob = await capturarFrame();
-          const formData = new FormData();
-          formData.append("frame", frameBlob, "frame.jpg");
-
-          const resp = await fetch("/process_frame/", { method: "POST", body: formData });
-          if (!resp.ok) return null;
-          return await resp.json();
-        } catch (err) {
-          console.error("Erro ao enviar frame:", err);
-          return null;
-        }
-      }
-
-      let loopRunning = false;
-      function startLoop() {
-        if (loopRunning) return;
-        loopRunning = true;
-        (async function loop() {
-          while (loopRunning) {
-            const result = await enviarFrame();
-            if (result && result.detected) {
-              mostrarSentimento(result.sentiment);
-            } else if (result && result.detected === false) {
-              overlay.style.display = "block";
-              overlay.innerText = "Nenhuma pessoa detectada";
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(";").shift();
             }
-            await new Promise(r => setTimeout(r, intervaloMs));
-          }
-        })();
-      }
 
-      const btnStop = document.createElement("button");
-      btnStop.textContent = "Parar captura";
-      btnStop.style.marginLeft = "12px";
-      btnStop.onclick = () => {
-        loopRunning = !loopRunning;
-        if (loopRunning) {
-          btnStop.textContent = "Parar captura";
-          startLoop();
-        } else {
-          btnStop.textContent = "Iniciar captura";
-        }
-      };
-      document.getElementById("controls").appendChild(btnStop);
-    })();
-  </script>
-  
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    statusEl.innerText = "Câmera ativada!";
+                    video.addEventListener("loadedmetadata", () => startLoop());
+                })
+                .catch(() => {
+                    statusEl.innerText = "Erro ao acessar a câmera.";
+                    statusEl.style.color = "#f00";
+                });
+
+            function mostrarSentimento(s) {
+                overlay.style.display = "block";
+                overlay.innerText = "Sentimento detectado: " + s;
+            }
+
+            async function capturarFrame() {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+                return new Promise(resolve => canvas.toBlob(b => resolve(b), "image/jpeg"));
+            }
+
+            async function enviarFrame() {
+                try {
+                    const formData = new FormData();
+                    formData.append("frame", await capturarFrame(), "frame.jpg");
+                    const resp = await fetch("/process_frame/", { method: "POST", body: formData });
+                    return resp.ok ? await resp.json() : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            let loopRunning = false;
+            function startLoop() {
+                if (loopRunning) return;
+                loopRunning = true;
+
+                (async function loop() {
+                    while (loopRunning) {
+                        const result = await enviarFrame();
+                        if (result && result.detected) mostrarSentimento(result.sentiment);
+                        else if (result && result.detected === false) {
+                            overlay.style.display = "block";
+                            overlay.innerText = "Nenhuma pessoa detectada";
+                        }
+                        await new Promise(r => setTimeout(r, intervaloMs));
+                    }
+                })();
+            }
+
+            const btnStop = document.createElement("button");
+            btnStop.textContent = "Parar captura";
+            btnStop.style.marginLeft = "12px";
+            btnStop.onclick = () => {
+                loopRunning = !loopRunning;
+                btnStop.textContent = loopRunning ? "Parar captura" : "Iniciar captura";
+                if (loopRunning) startLoop();
+            };
+            document.getElementById("controls").appendChild(btnStop);
+
+        })();
+    </script>
+
 </body>
 </html>

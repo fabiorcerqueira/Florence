@@ -4,7 +4,7 @@ from camera_app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home_view, name='home'),
+    path('', views.home, name='home'), 
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 
@@ -13,4 +13,6 @@ urlpatterns = [
     path("process_frame/", views.process_frame, name="process_frame"),
     path('configuracao/', views.editar_configuracao, name='configuracao'),
     path("salvar_intervalo/", views.salvar_intervalo, name="salvar_intervalo"),
+    path('alterar_senha/', views.alterar_senha, name='alterar_senha'),
+
 ]

@@ -17,6 +17,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Configuracao
 from .form import ConfiguracaoForm
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.contrib.auth.hashers import make_password
 
 processing_lock = Lock()
 
@@ -26,27 +29,30 @@ os.makedirs(DEBUG_FRAMES_DIR, exist_ok=True)
 # ------------------ Views básicas ------------------
 
 def home(request):
-    return HttpResponse(f"Olá {request.user.username}, você está logado")
+    return render(request, 'contas/home.html', {'usuario': request.user})
+
 
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+
         if user is not None:
             login(request, user)
-            return redirect('home')  
+
+            # 🔒 Ignora qualquer redirecionamento antigo
+            return redirect('home')
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
+            return render(request, 'contas/login.html')
+
+    # Se for GET (ou abriu a página)
     return render(request, 'contas/login.html')
 
 def logout_view(request):
     logout(request)
     return redirect('login')  
-
-@login_required
-def home_view(request):
-    return render(request, 'contas/home.html')
 
 # ------------------ Câmera ------------------
 
@@ -236,3 +242,34 @@ def salvar_intervalo(request):
         return JsonResponse({"mensagem": "Intervalo atualizado com sucesso!"})
 
     return JsonResponse({"erro": "Método não permitido"}, status=405)
+def alterar_senha(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        nova_senha = request.POST.get('nova_senha')
+        confirmar_senha = request.POST.get('confirmar_senha')
+
+        # --- Verifica se todos os campos estão preenchidos ---
+        if not username or not nova_senha or not confirmar_senha:
+            messages.error(request, 'Preencha todos os campos.')
+            return render(request, 'contas/alterar_senha.html')
+
+
+        # --- Verifica se as senhas coincidem ---
+        if nova_senha != confirmar_senha:
+            messages.error(request, 'As senhas não coincidem.')
+            return render(request, 'contas/alterar_senha.html')
+
+
+        try:
+            usuario = User.objects.get(username=username)
+            usuario.password = make_password(nova_senha)
+            usuario.save()
+            messages.success(request, 'Senha alterada com sucesso!')
+            return render(request, 'contas/login.html', {"mensagem": "Senha alterada com sucesso!"})
+        except User.DoesNotExist:
+            messages.error(request, 'Usuário não encontrado.')
+            return render(request, 'contas/alterar_senha.html')
+
+
+    # Se for GET (ou primeira vez que abre a página)
+    return render(request, 'contas/alterar_senha.html')
