@@ -61,6 +61,7 @@ def parse_category(answer):
     raise QwenInferenceError(f"Resposta não categórica: {answer[:120]!r}")
 
 def classify_expression(image):
+    """Devolve (categoria, texto para exibição). Só a categoria "pain" indica dor."""
     processor, model = get_qwen()
     image = image.convert("RGB")
     messages = [{"role": "user", "content": [
@@ -76,4 +77,5 @@ def classify_expression(image):
     answer = processor.batch_decode(
         generated, skip_special_tokens=True, clean_up_tokenization_spaces=False
     )[0].strip()
-    return DISPLAY[parse_category(answer)]
+    category = parse_category(answer)
+    return category, DISPLAY[category]

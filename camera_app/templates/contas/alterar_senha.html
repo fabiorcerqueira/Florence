@@ -140,19 +140,19 @@
         <form method="POST">
             {% csrf_token %}
 
-            <label>Usuário:</label>
-            <input type="text" name="username" required>
+            <label>Senha atual:</label>
+            <input type="password" name="senha_atual" autocomplete="current-password" required>
 
             <label>Nova senha:</label>
-            <input type="password" name="nova_senha" required>
+            <input type="password" name="nova_senha" autocomplete="new-password" required>
 
             <label>Confirmar nova senha:</label>
-            <input type="password" name="confirmar_senha" required>
+            <input type="password" name="confirmar_senha" autocomplete="new-password" required>
 
             <button type="submit">Alterar senha</button>
         </form>
 
-        <a href="{% url 'login' %}" class="btn-link">Voltar ao login</a>
+        <a href="{% url 'home' %}" class="btn-link">Voltar</a>
     </div>
 
     <div class="logos-container">

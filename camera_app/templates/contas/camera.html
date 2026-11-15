@@ -178,108 +178,182 @@
         <img src="https://images.seeklogo.com/logo-png/49/2/universidade-federal-fluminense-logo-png_seeklogo-492878.png">
     </div>
 
-    <!-- SEU SCRIPT ORIGINAL (NÃO ALTERADO) -->
     <script>
         (function() {
+            const MIN_INTERVAL_S = 5;
             const overlay = document.getElementById("overlay");
             const video = document.getElementById("video");
             const statusEl = document.getElementById("status");
             const container = document.getElementById("video-container");
+            const intervaloInput = document.getElementById("intervalo-input");
 
             let intervaloMs = 30000;
-            try {
-                const raw = container.dataset.intervalo;
-                const parsed = Number(raw);
-                if (Number.isFinite(parsed) && parsed > 0) intervaloMs = parsed;
-            } catch (e) {}
-
-            document.getElementById("intervalo-input").value = Math.round(intervaloMs / 1000);
-
-            document.getElementById("btn-set-intervalo").addEventListener("click", async () => {
-                const s = Number(document.getElementById("intervalo-input").value);
-                if (!Number.isFinite(s) || s < 1) return alert("Insira um número válido.");
-                intervaloMs = s * 1000;
-
-                const resp = await fetch("/salvar_intervalo/", {
-                    method: "POST",
-                    headers: { "X-CSRFToken": getCookie("csrftoken"), "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ segundos: s }),
-                });
-
-                const data = await resp.json();
-                if (resp.ok) alert("Intervalo salvo!");
-                else alert("Erro: " + (data.erro || "desconhecido"));
-            });
+            const parsed = Number(container.dataset.intervalo);
+            if (Number.isFinite(parsed) && parsed > 0) intervaloMs = parsed;
+            intervaloInput.value = Math.round(intervaloMs / 1000);
 
             function getCookie(name) {
                 const value = `; ${document.cookie}`;
                 const parts = value.split(`; ${name}=`);
                 if (parts.length === 2) return parts.pop().split(";").shift();
+                return "";
             }
 
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    video.srcObject = stream;
-                    statusEl.innerText = "Câmera ativada!";
-                    video.addEventListener("loadedmetadata", () => startLoop());
-                })
-                .catch(() => {
-                    statusEl.innerText = "Erro ao acessar a câmera.";
-                    statusEl.style.color = "#f00";
-                });
+            function setStatus(text, ok) {
+                statusEl.innerText = text;
+                statusEl.style.color = ok ? "#28a745" : "#d00";
+            }
 
-            function mostrarSentimento(s) {
+            function showOverlay(text) {
                 overlay.style.display = "block";
-                overlay.innerText = "Sentimento detectado: " + s;
+                overlay.innerText = text;
             }
 
-            async function capturarFrame() {
-                const canvas = document.createElement("canvas");
+            function horaAtual() {
+                return new Date().toLocaleTimeString();
+            }
+
+            // Envia uma requisição POST e devolve {status, data}; data é null se a
+            // resposta não for JSON (por exemplo, uma página HTML de erro).
+            async function postJson(url, body, extraHeaders) {
+                const resp = await fetch(url, {
+                    method: "POST",
+                    body: body,
+                    credentials: "same-origin",
+                    headers: Object.assign({ "X-CSRFToken": getCookie("csrftoken") }, extraHeaders || {}),
+                });
+                const type = resp.headers.get("Content-Type") || "";
+                const data = type.includes("application/json") ? await resp.json() : null;
+                return { status: resp.status, data: data };
+            }
+
+            document.getElementById("btn-set-intervalo").addEventListener("click", async () => {
+                const s = Number(intervaloInput.value);
+                if (!Number.isFinite(s) || s < MIN_INTERVAL_S) {
+                    return alert(`Insira um número inteiro de pelo menos ${MIN_INTERVAL_S} segundos.`);
+                }
+                try {
+                    const r = await postJson(
+                        "/salvar_intervalo/",
+                        new URLSearchParams({ segundos: Math.round(s) }),
+                        { "Content-Type": "application/x-www-form-urlencoded" }
+                    );
+                    if (r.status === 200) {
+                        intervaloMs = Math.round(s) * 1000;
+                        alert("Intervalo salvo!");
+                    } else {
+                        alert("Erro: " + ((r.data && r.data.erro) || "não foi possível salvar"));
+                    }
+                } catch (e) {
+                    alert("Erro de conexão ao salvar o intervalo.");
+                }
+            });
+
+            const canvas = document.createElement("canvas");
+
+            function capturarFrame() {
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
                 canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
                 return new Promise(resolve => canvas.toBlob(b => resolve(b), "image/jpeg"));
             }
 
-            async function enviarFrame() {
+            const ALERT_TEXT = {
+                sent: "Alerta enviado por e-mail.",
+                cooldown: "Alerta já enviado recentemente; novo e-mail suprimido.",
+                no_email: "ATENÇÃO: usuário sem e-mail cadastrado. Alerta NÃO enviado.",
+                failed: "ATENÇÃO: falha ao enviar o e-mail de alerta.",
+            };
+
+            // Processa um quadro. Devolve false se o monitoramento deve parar.
+            async function processarUmQuadro() {
+                let r;
                 try {
                     const formData = new FormData();
                     formData.append("frame", await capturarFrame(), "frame.jpg");
-                    const resp = await fetch("/process_frame/", { method: "POST", body: formData });
-                    return resp.ok ? await resp.json() : null;
-                } catch {
-                    return null;
+                    r = await postJson("/process_frame/", formData);
+                } catch (e) {
+                    setStatus(`Sem conexão com o servidor (${horaAtual()}). Tentando novamente...`, false);
+                    return true;
                 }
+
+                if (r.status === 401 || r.status === 403) {
+                    showOverlay("Monitoramento interrompido");
+                    setStatus("Sessão expirada. Faça login novamente para retomar o monitoramento.", false);
+                    return false;
+                }
+                const data = r.data;
+                if (r.status === 200 && data && data.detected === false) {
+                    showOverlay("Nenhuma pessoa detectada");
+                    setStatus(`Monitorando. Última análise: ${horaAtual()}`, true);
+                } else if (r.status === 200 && data && data.detected) {
+                    showOverlay("Expressão detectada: " + data.sentiment);
+                    let msg = `Monitorando. Última análise: ${horaAtual()}`;
+                    let ok = true;
+                    if (data.alert) {
+                        msg += " — " + (ALERT_TEXT[data.alert] || data.alert);
+                        ok = data.alert === "sent" || data.alert === "cooldown";
+                    }
+                    setStatus(msg, ok);
+                } else if (data && data.inconclusive) {
+                    showOverlay("Resultado inconclusivo neste quadro");
+                    setStatus(`Monitorando. Última análise inconclusiva: ${horaAtual()}`, false);
+                } else {
+                    showOverlay("Erro ao analisar o quadro");
+                    setStatus(`Erro no servidor (${horaAtual()}): ${(data && data.error) || r.status}. Tentando novamente...`, false);
+                }
+                return true;
             }
 
-            let loopRunning = false;
-            function startLoop() {
-                if (loopRunning) return;
-                loopRunning = true;
+            // Controle do laço: cada início cria uma "geração" nova; um laço antigo
+            // que ainda esteja dormindo encerra sozinho ao acordar.
+            let running = false;
+            let geracao = 0;
 
+            function startLoop() {
+                if (running) return;
+                running = true;
+                const minhaGeracao = ++geracao;
+                setStatus("Monitoramento iniciado.", true);
                 (async function loop() {
-                    while (loopRunning) {
-                        const result = await enviarFrame();
-                        if (result && result.detected) mostrarSentimento(result.sentiment);
-                        else if (result && result.detected === false) {
-                            overlay.style.display = "block";
-                            overlay.innerText = "Nenhuma pessoa detectada";
-                        }
+                    while (running && minhaGeracao === geracao) {
+                        const continuar = await processarUmQuadro();
+                        if (!continuar) { stopLoop(); break; }
                         await new Promise(r => setTimeout(r, intervaloMs));
                     }
                 })();
+                btnStop.textContent = "Parar captura";
+            }
+
+            function stopLoop() {
+                running = false;
+                geracao++;
+                btnStop.textContent = "Iniciar captura";
             }
 
             const btnStop = document.createElement("button");
             btnStop.textContent = "Parar captura";
             btnStop.style.marginLeft = "12px";
             btnStop.onclick = () => {
-                loopRunning = !loopRunning;
-                btnStop.textContent = loopRunning ? "Parar captura" : "Iniciar captura";
-                if (loopRunning) startLoop();
+                if (running) {
+                    stopLoop();
+                    setStatus("Monitoramento pausado.", false);
+                    showOverlay("Captura parada");
+                } else {
+                    startLoop();
+                }
             };
             document.getElementById("controls").appendChild(btnStop);
 
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    setStatus("Câmera ativada!", true);
+                    video.addEventListener("loadedmetadata", () => startLoop());
+                })
+                .catch(() => {
+                    setStatus("Erro ao acessar a câmera.", false);
+                });
         })();
     </script>
 

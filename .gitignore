@@ -21,11 +21,12 @@ media/
 file_storage/
 staticfiles/
 
-# Migrations (exceto __init__.py)
-*/migrations/*
-!*/migrations/__init__.py
+# Migrações SÃO versionadas: são necessárias para criar as tabelas do app.
 
 # IDEs
 .idea/
 *.iml
 .vscode/
+
+# Imagens de depuração (não versionar frames de pessoas)
+frames_debug/

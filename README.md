@@ -6,11 +6,11 @@ Florence is intended for research and assistive monitoring. **A facial-expressio
 
 ## System overview
 
-The application uses Django for its web interface and OpenCV for camera-frame acquisition. Its processing pipeline includes:
+The application uses Django for its web interface. The browser captures a camera frame at a configurable interval (default 30 s) and sends it to the server, which decodes it (OpenCV/Pillow) and runs the pipeline:
 
 1. **Person-presence check:** a BLIP visual-question-answering model (`Salesforce/blip-vqa-base`).
 2. **Facial-expression classification:** the current Qwen variant uses `Qwen/Qwen2.5-VL-3B-Instruct` in a zero-shot, six-category protocol: `pain`, `happiness`, `sadness`, `anger`, `disgust`, and `surprise`.
-3. **Monitoring and notification:** the existing Django workflow displays results and can trigger an email notification when the model returns the `pain` category.
+3. **Monitoring and notification:** the page displays each result; when the model returns `pain`, the server sends an e-mail to the logged-in user's registered address, at most once per cooldown period (default 10 min). An answer outside the six categories is treated as inconclusive: no decision and no alert.
 
 The Qwen variant replaces the earlier BLIP/LAVIS image–text matching (ITM) expression classifier; it does **not** replace the BLIP VQA presence check.
 
@@ -23,7 +23,7 @@ The Florence research project includes a human-annotated image collection and ex
 - **Human-validation form generation:** https://github.com/fabiorcerqueira/create_form_for_img_human_validation
 - **Experimental notebook:** [`testing_models.ipynb`](testing_models.ipynb)
 
-When the reproduction package has been added, see [`reproducibility/`](reproducibility/) for image-level predictions, statistical scripts, and documentation. This link is intended for the repository layout and should be checked after upload.
+The reproducibility package is [`Florence_supplement_for_reproducibility.zip`](Florence_supplement_for_reproducibility.zip): image-level predictions, statistical scripts and documentation.
 
 ## Running the Qwen variant
 

@@ -110,6 +110,11 @@
                 width: 42px;
             }
         }
+
+        .mensagem {
+            color: #28a745;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -119,7 +124,14 @@
         <h1>Bem-vindo, <span>{{ user.username }}</span>!</h1>
         <p>Você está logado no sistema.</p>
 
+        {% if messages %}
+            {% for message in messages %}
+                <p class="mensagem">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
         <a href="{% url 'camera' %}" class="btn btn-camera">Abrir Câmera</a>
+        <a href="{% url 'alterar_senha' %}" class="btn btn-camera">Alterar senha</a>
         <a href="{% url 'logout' %}" class="btn btn-logout">Sair</a>
     </div>
 

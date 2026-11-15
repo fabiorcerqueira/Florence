@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,12 +11,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*o#!$uca!lx=fo0dc6a6=3cke-29=60!0%@)j4%1aw366rq@f_'
+# Defina FLORENCE_SECRET_KEY no ambiente. Sem ela, uma chave aleatória é gerada a
+# cada inicialização (as sessões abertas deixam de valer quando o servidor reinicia).
+SECRET_KEY = os.environ.get("FLORENCE_SECRET_KEY") or get_random_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("FLORENCE_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get("FLORENCE_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
 
 
 # Application definition
@@ -120,10 +129,15 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'        # Servidor SMTP do Gmail
 EMAIL_PORT = 587                     # Porta TLS
 EMAIL_USE_TLS = True                 # Usa TLS (seguro)
-EMAIL_HOST_USER = ''   # Seu e-mail de envio
-EMAIL_HOST_PASSWORD = ''  # Senha do e-mail ou senha de app
+# Credenciais lidas do ambiente; nunca as grave neste arquivo.
+EMAIL_HOST_USER = os.environ.get("FLORENCE_EMAIL_USER", "")          # e-mail de envio
+EMAIL_HOST_PASSWORD = os.environ.get("FLORENCE_EMAIL_PASSWORD", "")  # senha de app
 
 # Opcional: quem aparece como remetente
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-LOGIN_REDIRECT_URL = '/home/'
+LOGIN_REDIRECT_URL = '/'
+
+# Intervalo mínimo, em segundos, entre dois e-mails de alerta para o mesmo usuário.
+# Enquanto a expressão de dor persistir, evita um e-mail a cada quadro.
+FLORENCE_ALERT_COOLDOWN_SECONDS = int(os.environ.get("FLORENCE_ALERT_COOLDOWN_SECONDS", "600"))
