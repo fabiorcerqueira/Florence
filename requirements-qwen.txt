@@ -1,0 +1,9 @@
+# Python 3.10+ recomendado; instalar PyTorch CUDA compatível antes.
+Django==5.2.4
+opencv-python-headless>=4.8,<5
+Pillow>=11,<13
+transformers>=4.51,<5
+accelerate>=1.0,<2
+bitsandbytes>=0.45,<1
+safetensors>=0.5,<1
+qwen-vl-utils>=0.0.8,<1

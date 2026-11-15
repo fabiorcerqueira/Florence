@@ -9,7 +9,7 @@ import torch
 from PIL import Image
 import io
 from transformers import BlipProcessor, BlipForQuestionAnswering
-from lavis.models import load_model_and_preprocess
+from .qwen_inference import classify_expression, QwenInferenceError
 from django.views.decorators.csrf import csrf_exempt
 import os, traceback, datetime, numpy as np, cv2
 from threading import Lock
@@ -67,42 +67,21 @@ def camera_view(request):
     return render(request, 'contas/camera.html', {"intervalo": intervalo})
 
 
-# ------------------ IA: BLIP + LAVIS ------------------
-
+# ------------------ IA: BLIP VQA + Qwen2.5-VL-3B ------------------
+# A checagem de presença humana continua usando o BLIP VQA original.
+# A classificação afetiva passa a utilizar o Qwen2.5-VL-3B-Instruct.
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+_vqa_processor = None
+_vqa_model = None
 
-processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
-model_vqa = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-base").to(device)
-
-_model_itm = None
-_vis_processors_itm = None
-_text_processors_itm = None
-
-def get_itm_model():
-    global _model_itm, _vis_processors_itm, _text_processors_itm
-
-    if _model_itm is not None:
-        return _model_itm, _vis_processors_itm, _text_processors_itm
-
-    try:
-        print(f"🔄 Carregando BLIP ITM (device={device})")
-        _model_itm, _vis_processors_itm, _text_processors_itm = load_model_and_preprocess(
-            name="blip_image_text_matching",
-            model_type="base",
-            is_eval=True,
-            device=device
-        )
-        print("✅ Modelo BLIP ITM carregado com sucesso.")
-    except Exception as e:
-        print("❌ Erro ao carregar ITM:", e)
-        tb = traceback.format_exc()
-        with open(os.path.join(DEBUG_FRAMES_DIR, "itm_error.log"), "a", encoding="utf-8") as f:
-            f.write(f"\n\n[{datetime.datetime.now()}] Erro ao carregar BLIP ITM:\n{tb}\n")
-        _model_itm = None
-        _vis_processors_itm = {"eval": lambda x: x}
-        _text_processors_itm = {"eval": lambda x: x}
-
-    return _model_itm, _vis_processors_itm, _text_processors_itm
+def get_vqa_model():
+    global _vqa_processor, _vqa_model
+    if _vqa_model is None:
+        _vqa_processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
+        _vqa_model = BlipForQuestionAnswering.from_pretrained(
+            "Salesforce/blip-vqa-base"
+        ).to(device).eval()
+    return _vqa_processor, _vqa_model
 
 # ---------------- process_frame ----------------
 @csrf_exempt
@@ -134,61 +113,34 @@ def process_frame(request):
         except Exception:
             return JsonResponse({"error": "Falha ao decodificar frame"}, status=400)
 
-    # --- VQA ---
-    questions = [
-        "Is there a person in the image?",
-        "Is there a human in this photo?",
-        "Is someone visible in this image?"
-    ]
-    vqa_positive = False
-    for q in questions:
+    # Protege os modelos de chamadas simultâneas de inferência.
+    with processing_lock:
         try:
-            inputs = processor(img, q, return_tensors="pt").to(device)
-            out = model_vqa.generate(**inputs)
-            answer = processor.decode(out[0], skip_special_tokens=True)
-            if "yes" in answer.lower() or "sim" in answer.lower():
-                vqa_positive = True
-                break
-        except Exception as e:
-            print("⚠️ Erro no VQA:", e)
+            processor, model_vqa = get_vqa_model()
+            questions = [
+                "Is there a person in the image?",
+                "Is there a human in this photo?",
+                "Is someone visible in this image?",
+            ]
+            vqa_positive = False
+            with torch.inference_mode():
+                for question in questions:
+                    inputs = processor(img, question, return_tensors="pt").to(device)
+                    output = model_vqa.generate(**inputs)
+                    answer = processor.decode(output[0], skip_special_tokens=True).strip().lower()
+                    if answer in ("yes", "sim"):
+                        vqa_positive = True
+                        break
+            if not vqa_positive:
+                return JsonResponse({"detected": False, "sentiment": None})
 
-    if not vqa_positive:
-        return JsonResponse({"detected": False, "sentiment": None})
-
-    # --- ITM ---
-    model_itm, vis_processors_itm, text_processors_itm = get_itm_model()
-    if model_itm is None:
-        return JsonResponse({"error": "Modelo ITM não carregado"}, status=500)
-
-    frases = [
-        'Person is in pain',
-        'Person is angry',
-        'Person is disgusted',
-        'Person is happy',
-        'Person is sad',
-        'Person is surprised'
-    ]
-
-    textos_itm = [text_processors_itm["eval"](f) for f in frases]
-    img_itm = vis_processors_itm["eval"](img).unsqueeze(0).to(device)
-
-    scores = []
-    for f, txt in zip(frases, textos_itm):
-        try:
-            with torch.no_grad():
-                itm_output = model_itm({"image": img_itm, "text_input": txt}, match_head="itm")
-                itm_scores = torch.nn.functional.softmax(itm_output, dim=1)
-                prob = itm_scores[:, 1].item()
-                scores.append(prob)
-        except Exception as e:
-            print("⚠️ Erro no ITM:", e)
-
-    if not scores:
-        return JsonResponse({"error": "ITM falhou"}, status=500)
-
-    maior = max(scores)
-    resultado_sentimento = frases[scores.index(maior)]
-    print(f"✅ Sentimento escolhido: {resultado_sentimento} (score={maior:.4f})")
+            resultado_sentimento = classify_expression(img)
+        except QwenInferenceError as exc:
+            print("Erro na classificação Qwen:", exc)
+            return JsonResponse({"error": "Classificação inconclusiva"}, status=503)
+        except Exception as exc:
+            print("Erro na inferência Florence:", type(exc).__name__, str(exc))
+            return JsonResponse({"error": "Falha no processamento da imagem"}, status=503)
 
     # --- Enviar e-mail se detectar dor ---
     if "pain" in resultado_sentimento.lower():
