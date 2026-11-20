@@ -19,11 +19,11 @@ The Qwen variant replaces the earlier BLIP/LAVIS image–text matching (ITM) exp
 The Florence research project includes a human-annotated image collection and experimental comparisons of vision-language architectures, prompting strategies, and statistical analyses. The current paper evaluation uses **FPD-181 (181 images with binary pain/no-pain reference labels)**; this should not be confused with the 189-image collection used in earlier experiments, which included eight inconclusive cases.
 
 - **Application and experimental code:** https://github.com/fabiorcerqueira/Florence
-- **Image repository and human annotations:** https://github.com/fabiorcerqueira/pain_nopain_img_rep
+- **Human annotations:** image-level labels and all human ratings are in the reproducibility package below. The photographs are not distributed publicly, because redistributing them as a dataset depends on the terms of each source site (Pexels, Unsplash, Pixabay); they are available from the authors on request.
 - **Human-validation form generation:** https://github.com/fabiorcerqueira/create_form_for_img_human_validation
 - **Experimental notebook:** [`testing_models.ipynb`](testing_models.ipynb)
 
-The reproducibility package is [`Florence_supplement_for_reproducibility.zip`](Florence_supplement_for_reproducibility.zip): image-level predictions, statistical scripts and documentation.
+The reproducibility package is [`Florence_supplement_for_reproducibility.zip`](Florence_supplement_for_reproducibility.zip): image-level predictions, image-level labels, all human ratings, statistical scripts and documentation.
 
 ## Running the Qwen variant
 
