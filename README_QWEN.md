@@ -49,5 +49,5 @@ Do not expose the Django development server to the public internet. Password cha
 ## Related repositories
 
 - Florence: https://github.com/fabiorcerqueira/Florence
-- Human annotations: in `Florence_supplement_for_reproducibility.zip` (this repository); images available from the authors on request
+- Human annotations: in `Florence_supplement_for_reproducibility.zip` (this repository); images not redistributed because of third-party licenses
 - Human-validation form generator: https://github.com/fabiorcerqueira/create_form_for_img_human_validation
