@@ -21,7 +21,7 @@ The Florence research project includes a human-annotated image collection and ex
 - **Application and experimental code:** https://github.com/fabiorcerqueira/Florence
 - **Human annotations:** image-level labels and all human ratings are in the reproducibility package below. The photographs are not distributed publicly, because redistributing them as a dataset depends on the terms of each source site (Pexels, Unsplash, Pixabay); they are available from the authors on request.
 - **Human-validation form generation:** https://github.com/fabiorcerqueira/create_form_for_img_human_validation
-- **Experimental notebook:** [`testing_models.ipynb`](testing_models.ipynb)
+- **Experimental notebook:** [`testing_models.ipynb`](testing_models.ipynb). It was run in Google Colab, and its setup cell clones an image repository that is no longer public. To rerun the inference, request the images from the authors and place them under `/content/florence_visapp/images/` (`PainImages/` and `NoPainImages/`). The statistics can be reproduced without the images from the reproducibility package.
 
 The reproducibility package is [`Florence_supplement_for_reproducibility.zip`](Florence_supplement_for_reproducibility.zip): image-level predictions, image-level labels, all human ratings, statistical scripts and documentation.
 
